@@ -8,6 +8,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
@@ -20,6 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -99,8 +101,11 @@ public class TinderAuto {
                 screensLeft--;
             } else if (TextUtils.equals(title, "What's Your Date of Birth?") ||
                     TextUtils.equals(title, "What's Your Birthday?")) {
-                enterBirthday();
+                enterBirthday("Jan", "22", "1988");
                 screensLeft--;
+
+                fail();
+
             } else if (TextUtils.equals(title, "What's Your Gender?")) {
                 enterSex();
                 screensLeft--;
@@ -166,11 +171,28 @@ public class TinderAuto {
         mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_button")).click();
     }
 
-    private void enterBirthday() throws UiObjectNotFoundException {
-        mDevice.wait(Until.hasObject(By.text("What's Your Birthday?")), LAUNCH_TIMEOUT);
+    private void enterBirthday(String month, String day, String year) throws UiObjectNotFoundException {
+        List<UiObject2> inputs = mDevice.findObjects(By.clazz(EditText.class).res("android:id/numberpicker_input"));
+
+        if (inputs.size() == 3) {
+            inputs.get(0).click();
+            inputs.get(0).setText(month);
+            inputs.get(1).click();
+            inputs.get(1).setText(day);
+            inputs.get(2).click();
+            inputs.get(2).setText(year);
+            inputs.get(0).click();
+
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
 
-        // is today your birthday
+        // is today your birthday / is your age ...
         pressMultipleTimes("YES");
     }
 
