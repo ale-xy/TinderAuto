@@ -103,6 +103,9 @@ public class TinderAuto {
                     TextUtils.equals(title, "What's Your Birthday?")) {
                 enterBirthday("Jan", "22", "1988");
                 screensLeft--;
+
+                fail();
+
             } else if (TextUtils.equals(title, "What's Your Gender?")) {
                 enterSex();
                 screensLeft--;
