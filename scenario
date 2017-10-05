@@ -1,0 +1,16 @@
+The thing I need is to automate Tinder on my Android phone, this involves enabling flight mode
+waiting 2-3 seconds and disabling it again, creating a Facebook account, phone verifying it
+(which involves inputting a phone number from notepad on the phone and visiting a website to
+get the verification code). Once the facebook account is created (with a specific name but no
+profile picture), the phone needs to then update the GPS location to a specific location, then
+open up tinder, press login with facebook, accept the prompt to allow permission and enter the
+(same) phone number again, edit the tinder profile (add profile pictures, fill out the bio, pick
+a random song as an anthem), update the options in tinder to decrease the search radius and
+increase the age range. Exit the app (and if using the gps location faker app, disable it) and
+re open tinder back up, then exit and re enter the app until people appear (this is necessary to
+force tinder to update to the gps location previously faked), then like 100 people and logout.
+Without exiting the app, pressing log in with phone number, enter the (still same) phone number,
+ go through the registration process and once done, update the GPS location to a new location,
+ edit the profile, update tinder options to decrease search radius and increase age range, then
+ disable gps faker, exit tinder, open it up again (until location is updated sucessfully), like
+ 100 people, logout, log out of facebook. And then start the whole process over again.

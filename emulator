@@ -1,0 +1,1 @@
+/Users/alexeykrichun/Library/Android/sdk/tools/emulator -avd Nexus_5_API_25_google -partition-size 2000 -wipe-data
