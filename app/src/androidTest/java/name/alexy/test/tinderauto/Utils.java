@@ -1,9 +1,14 @@
 package name.alexy.test.tinderauto;
 
+import android.support.test.InstrumentationRegistry;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Created by alexeykrichun on 04/10/2017.
@@ -40,5 +45,19 @@ public class Utils {
 
         System.out.println("Return " + returnValue);
         return returnValue;
+    }
+
+    public static String getRandomLine(String fileName) throws IOException {
+        InputStream file = InstrumentationRegistry.getContext().getAssets().open(fileName);
+        List<String> lines = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(file));
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+            lines.add(line);
+        }
+
+        Random random = new Random();
+        return lines.get(random.nextInt(lines.size()));
     }
 }

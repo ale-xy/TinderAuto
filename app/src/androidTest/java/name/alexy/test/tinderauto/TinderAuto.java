@@ -40,6 +40,11 @@ public class TinderAuto {
 //    private static final String PHONE = "447893364366";
     private static final String PASSWORD = "QpAlZm102938";
 //    private static final String SMS = "12345";
+
+    private static final String FILE_NAMES = "names.txt";
+    private static final String FILE_SURNAMES = "surnames.txt";
+    private static final String FILE_BIRTHDAYS = "birthdays.txt";
+
     private UiDevice mDevice;
 
     @Before
@@ -101,11 +106,8 @@ public class TinderAuto {
                 screensLeft--;
             } else if (TextUtils.equals(title, "What's Your Date of Birth?") ||
                     TextUtils.equals(title, "What's Your Birthday?")) {
-                enterBirthday("Jan", "22", "1988");
+                enterBirthday();
                 screensLeft--;
-
-                fail();
-
             } else if (TextUtils.equals(title, "What's Your Gender?")) {
                 enterSex();
                 screensLeft--;
@@ -171,16 +173,22 @@ public class TinderAuto {
         mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_button")).click();
     }
 
-    private void enterBirthday(String month, String day, String year) throws UiObjectNotFoundException {
+    private void enterBirthday() throws Exception {
+        String birthday = Utils.getRandomLine(FILE_BIRTHDAYS);
+        String[] parts = birthday.split("-");  //format: 01-Jan-2000
+
         List<UiObject2> inputs = mDevice.findObjects(By.clazz(EditText.class).res("android:id/numberpicker_input"));
 
         if (inputs.size() == 3) {
+            //month
             inputs.get(0).click();
-            inputs.get(0).setText(month);
+            inputs.get(0).setText(parts[1]);
+            //day
             inputs.get(1).click();
-            inputs.get(1).setText(day);
+            inputs.get(1).setText(parts[0]);
+            //year
             inputs.get(2).click();
-            inputs.get(2).setText(year);
+            inputs.get(2).setText(parts[2]);
             inputs.get(0).click();
 
             try {
@@ -196,9 +204,12 @@ public class TinderAuto {
         pressMultipleTimes("YES");
     }
 
-    private void enterName() throws UiObjectNotFoundException {
-        mDevice.findObject(new UiSelector().className(EditText.class).resourceId("com.facebook.katana:id/first_name_input")).setText(FIRST_NAME);
-        mDevice.findObject(new UiSelector().className(EditText.class).resourceId("com.facebook.katana:id/last_name_input")).setText(LAST_NAME);
+    private void enterName() throws Exception {
+        String firstName = Utils.getRandomLine(FILE_NAMES);
+        String lastName = Utils.getRandomLine(FILE_SURNAMES);
+
+        mDevice.findObject(new UiSelector().className(EditText.class).resourceId("com.facebook.katana:id/first_name_input")).setText(firstName);
+        mDevice.findObject(new UiSelector().className(EditText.class).resourceId("com.facebook.katana:id/last_name_input")).setText(lastName);
         mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
     }
 
