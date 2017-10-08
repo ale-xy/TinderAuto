@@ -13,6 +13,7 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -33,6 +34,7 @@ public class TinderAuto {
 
     private static final String FB_PACKAGE = "com.facebook.katana";
     private static final int LAUNCH_TIMEOUT = 15000;
+    private static final int FIND_TIMEOUT = 5000;
     private static final String FIRST_NAME = "Vasya";
     private static final String LAST_NAME = "Pupkin";
     private static final String COUNTRY = "United Kingdom";
@@ -52,6 +54,8 @@ public class TinderAuto {
 
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mDevice.pressHome();
+
+        //todo storage permissions
 
         // Wait for launcher
         final String launcherPackage = mDevice.getLauncherPackageName();
@@ -104,47 +108,81 @@ public class TinderAuto {
             if (TextUtils.equals(title, "Enter Your Mobile Number")) {
                 enterPhone(phone);
                 screensLeft--;
-            } else if (TextUtils.equals(title, "What's Your Date of Birth?") ||
-                    TextUtils.equals(title, "What's Your Birthday?")) {
+            } else if (title.contains("Birth") && (title.contains("Date") || title.contains("day"))) {
                 enterBirthday();
                 screensLeft--;
-            } else if (TextUtils.equals(title, "What's Your Gender?")) {
+            } else if (title.contains("Gender")) {
                 enterSex();
                 screensLeft--;
-            } else if (TextUtils.equals(title, "Choose a Password")) {
+            } else if (title.contains("Password")) {
                 enterPassword();
                 screensLeft--;
             }
         }
 
         //finish signing up
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_without_contacts")).click();
+        try {
+            mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_without_contacts")).click();
+        } catch (UiObjectNotFoundException e) {
+            e.getMessage();
+        }
+
+        try {
+            mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_button")).click();
+        } catch (UiObjectNotFoundException e) {
+            e.getMessage();
+        }
+
+        PhoneSmsHelper.addUsedPhone(phone);
 
         //wait for sms request
-        mDevice.wait(Until.hasObject(By.text("DENY")), LAUNCH_TIMEOUT);
+        mDevice.wait(Until.hasObject(By.text("DENY")), FIND_TIMEOUT);
         pressMultipleTimes("DENY");
 
         try {
             //save password
-            mDevice.wait(Until.hasObject(By.text("SAVE PASSWORD")), LAUNCH_TIMEOUT);
+            mDevice.wait(Until.hasObject(By.text("SAVE PASSWORD")), FIND_TIMEOUT);
             mDevice.findObject(new UiSelector().className(Button.class).text("SAVE PASSWORD")).click();
         } catch (UiObjectNotFoundException e) {
             e.getMessage();
         }
 
-        //sms
-
-        String code = PhoneSmsHelper.getFacebookCode(phone, phoneTime - 20000, 30, 2000);
-
-        if (TextUtils.isEmpty(code)) {
-            fail("No facebook code received");
+        try {
+            //Next Time, Log In With One Tap
+            mDevice.wait(Until.hasObject(By.text("Next Time, Log In With One Tap")), FIND_TIMEOUT);
+            mDevice.findObject(new UiSelector().className(Button.class).text("OK")).click();
+        } catch (UiObjectNotFoundException e) {
+            e.getMessage();
         }
 
-        mDevice.wait(Until.hasObject(By.text("Enter the code from your SMS")), LAUNCH_TIMEOUT);
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/code_input")).setText(code);
-        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/continue_button")).click();
+        try {
+            //Log In With One Tap
+            mDevice.wait(Until.hasObject(By.text("Log In With One Tap")), FIND_TIMEOUT);
+            mDevice.findObject(new UiSelector().className(Button.class).text("OK")).click();
+        } catch (UiObjectNotFoundException e) {
+            e.getMessage();
+        }
 
         pressMultipleTimes("SKIP");
+
+        //sms
+        if (mDevice.wait(Until.hasObject(By.text("Enter the code from your SMS")), FIND_TIMEOUT)) {
+
+            String code = PhoneSmsHelper.getFacebookCode(phone, phoneTime - 20000, 30, 2000);
+
+            if (TextUtils.isEmpty(code)) {
+                fail("No facebook code received");
+            }
+
+            mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/code_input")).setText(code);
+            mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/continue_button")).click();
+        } else {
+            Log.w("TinderAuto", "No SMS requested");
+        }
+
+        pressMultipleTimes("SKIP");
+
+        pressMultipleTimes("DENY");
 
     }
 
@@ -216,10 +254,7 @@ public class TinderAuto {
     private void pressMultipleTimes(String text) throws UiObjectNotFoundException {
         try {
             while (true) {
-                UiObject uiObject = mDevice.findObject(new UiSelector().textMatches("(?i)" + text));
-                if (uiObject != null) {
-                    uiObject.click();
-                }
+                mDevice.findObject(new UiSelector().textMatches("(?i)" + text)).click();
             }
         } catch (UiObjectNotFoundException e) {
             e.getMessage();
