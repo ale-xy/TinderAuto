@@ -42,7 +42,8 @@ task clearData {
     doLast {
         exec {
             executable android.getAdbExe()
-            args "shell", "pm clear com.facebook.katana"
+//            args "shell", "pm clear com.facebook.katana"
+            args "shell", "pm clear com.tinder"
 //            standardOutput = execStdOut
 //            errorOutput = execStderr
         }

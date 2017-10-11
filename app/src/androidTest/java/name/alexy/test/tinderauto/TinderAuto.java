@@ -2,262 +2,282 @@ package name.alexy.test.tinderauto;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SdkSuppress;
-import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Button;
-import android.widget.EditText;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import name.alexy.test.tinderauto.phoneservice.TinderSmsParser;
 
-@RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = 18)
+import static junit.framework.Assert.fail;
+import static name.alexy.test.tinderauto.AppsAuto.COUNTRY;
+import static name.alexy.test.tinderauto.AppsAuto.COUNTRY_CODE;
+import static name.alexy.test.tinderauto.AppsAuto.FILE_BIRTHDAYS;
+import static name.alexy.test.tinderauto.AppsAuto.FILE_NAMES;
+import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT;
+import static name.alexy.test.tinderauto.AppsAuto.LAUNCH_TIMEOUT;
+import static name.alexy.test.tinderauto.AppsAuto.PASSWORD;
+import static name.alexy.test.tinderauto.AppsAuto.clickIfExistsById;
+import static name.alexy.test.tinderauto.AppsAuto.clickIfExistsByText;
+
+/**
+ * Created by alexeykrichun on 09/10/2017.
+ */
+
 public class TinderAuto {
+    static final String TINDER_PACKAGE = "com.tinder";
+    public static final int DISTANCE_IN_MILES = 30;
+    private static final int LIKES_AMOUNT = 100;
 
-    private static final String FB_PACKAGE = "com.facebook.katana";
-    private static final int LAUNCH_TIMEOUT = 15000;
-    private static final int FIND_TIMEOUT = 5000;
-    private static final String FIRST_NAME = "Vasya";
-    private static final String LAST_NAME = "Pupkin";
-    private static final String COUNTRY = "United Kingdom";
-    private static final String COUNTRY_CODE = "44";
-//    private static final String PHONE = "447893364366";
-    private static final String PASSWORD = "QpAlZm102938";
-//    private static final String SMS = "12345";
+    private final UiDevice mDevice;
 
-    private static final String FILE_NAMES = "names.txt";
-    private static final String FILE_SURNAMES = "surnames.txt";
-    private static final String FILE_BIRTHDAYS = "birthdays.txt";
-
-    private UiDevice mDevice;
-
-    @Before
-    public void init() throws Exception {
-
-        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mDevice.pressHome();
-
-        //todo storage permissions
-
-        // Wait for launcher
-        final String launcherPackage = mDevice.getLauncherPackageName();
-        assertThat(launcherPackage, notNullValue());
-        mDevice.wait(Until.hasObject(By.pkg(launcherPackage).depth(0)), LAUNCH_TIMEOUT);
+    public TinderAuto(UiDevice mDevice) {
+        this.mDevice = mDevice;
     }
 
-    @Test
-    public void play() throws Exception{
-        String phone = PhoneSmsHelper.getFacebookFreePhoneNumber();
+    void runTinder(String phone, boolean facebook) throws Exception {
 
-        if (TextUtils.isEmpty(phone)) {
-            fail("No phone number");
-            return;
-        }
-
-        createFacebookAccount(phone);
-    }
-
-    private void createFacebookAccount(final String phone) throws Exception {
         // Launch the app
         Context context = InstrumentationRegistry.getContext();
-        final Intent intent = context.getPackageManager().getLaunchIntentForPackage(FB_PACKAGE);
+        final Intent intent = context.getPackageManager().getLaunchIntentForPackage(TINDER_PACKAGE);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);
 
-        // Wait for the app to appear
-        mDevice.wait(Until.hasObject(By.pkg(FB_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
+        mDevice.wait(Until.hasObject(By.pkg(TINDER_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
 
-        UiObject createAccountButton = mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/login_create_account_button"));
+        if (facebook) {
+            mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/real_facebook_login_button")).click();
 
-        if (createAccountButton == null) {
-            fail("Can't create FB account");
-        }
+            UiObject fbButton = mDevice.findObject(new UiSelector().className(Button.class).packageName("com.facebook.katana").resourceId("u_0_9"));
 
-        createAccountButton.click();
-
-        //next
-        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
-
-        //permissions
-        pressMultipleTimes("DENY");
-
-        enterName();
-
-        int screensLeft = 4;
-        long phoneTime = new Date().getTime();
-        while (screensLeft > 0) {
-            String title = mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/header_text")).getText();
-            if (TextUtils.equals(title, "Enter Your Mobile Number")) {
-                enterPhone(phone);
-                screensLeft--;
-            } else if (title.contains("Birth") && (title.contains("Date") || title.contains("day"))) {
-                enterBirthday();
-                screensLeft--;
-            } else if (title.contains("Gender")) {
-                enterSex();
-                screensLeft--;
-            } else if (title.contains("Password")) {
-                enterPassword();
-                screensLeft--;
-            }
-        }
-
-        //finish signing up
-        try {
-            mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_without_contacts")).click();
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
-        }
-
-        try {
-            mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_button")).click();
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
-        }
-
-        PhoneSmsHelper.addUsedPhone(phone);
-
-        //wait for sms request
-        mDevice.wait(Until.hasObject(By.text("DENY")), FIND_TIMEOUT);
-        pressMultipleTimes("DENY");
-
-        try {
-            //save password
-            mDevice.wait(Until.hasObject(By.text("SAVE PASSWORD")), FIND_TIMEOUT);
-            mDevice.findObject(new UiSelector().className(Button.class).text("SAVE PASSWORD")).click();
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
-        }
-
-        try {
-            //Next Time, Log In With One Tap
-            mDevice.wait(Until.hasObject(By.text("Next Time, Log In With One Tap")), FIND_TIMEOUT);
-            mDevice.findObject(new UiSelector().className(Button.class).text("OK")).click();
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
-        }
-
-        try {
-            //Log In With One Tap
-            mDevice.wait(Until.hasObject(By.text("Log In With One Tap")), FIND_TIMEOUT);
-            mDevice.findObject(new UiSelector().className(Button.class).text("OK")).click();
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
-        }
-
-        pressMultipleTimes("SKIP");
-
-        //sms
-        if (mDevice.wait(Until.hasObject(By.text("Enter the code from your SMS")), FIND_TIMEOUT)) {
-
-            String code = PhoneSmsHelper.getFacebookCode(phone, phoneTime - 20000, 30, 2000);
-
-            if (TextUtils.isEmpty(code)) {
-                fail("No facebook code received");
+            if (fbButton.waitForExists(FIND_TIMEOUT)) {
+                fbButton.click();
+            } else {
+                Log.d("TinderAuto", "No FB auth");
             }
 
-            mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/code_input")).setText(code);
-            mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/continue_button")).click();
+            inputAndVerifyPhone(phone);
         } else {
-            Log.w("TinderAuto", "No SMS requested");
+            mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/alternative_login_button")).click();
+            inputAndVerifyPhone(phone);
+            phoneRegistration();
         }
 
-        pressMultipleTimes("SKIP");
+        //allow location
+        mDevice.wait(Until.hasObject(By.text("ALLOW")), FIND_TIMEOUT);
+        AppsAuto.pressMultipleTimes(mDevice, "ALLOW");
 
-        pressMultipleTimes("DENY");
+        fillProfile();
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_flame")).click();
+
+        like();
+
+        logout();
+
 
     }
 
-    private void enterPassword() throws UiObjectNotFoundException {
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/password_input")).setText(PASSWORD);
-        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
+    private void logout() throws UiObjectNotFoundException {
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_profile")).click();
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_settings_button")).click();
+
+        UiScrollable scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+        scrollView.scrollToEnd(30);
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/button_logout")).click();
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/txt_choice_two")).click();
     }
 
-    private void enterPhone(String phone) throws UiObjectNotFoundException {
-        //country selector
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/country_name_selector")).click();
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/country_search_edit_text")).setText(COUNTRY);
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/country_name").textStartsWith(COUNTRY)).click();
-        //number
+    private void like() throws UiObjectNotFoundException {
+        boolean dialogShown = false;
+        for (int i = 0; i < LIKES_AMOUNT; i++) {
+            UiObject like = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/gamepad_like"));
+            if (!like.exists()) {
+                clickIfExistsById(mDevice, "com.tinder:id/btn_find_more_matches");
+                like.waitForExists(1000);
+            }
+
+            like.click();
+
+            if (!dialogShown) {
+                dialogShown = clickIfExistsById(mDevice, "com.tinder:id/txt_choice_two");
+            }
+
+        }
+    }
+
+    private void phoneRegistration() throws UiObjectNotFoundException, IOException, ParseException {
+        //email
+        UiObject emailSkip = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_skip_button"));
+        if (emailSkip.exists()) {
+            emailSkip.click();
+            mDevice.findObject(new UiSelector().text("YES")).click();
+
+            //password
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_password_edit_text")).setText(PASSWORD);
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_password_action_button")).click();
+
+            String firstName = Utils.getRandomLine(FILE_NAMES);
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_name_edit_text")).setText(firstName);
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_name_add_button")).click();
+
+            String birthday = Utils.getRandomLine(FILE_BIRTHDAYS);
+            SimpleDateFormat format = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+            Date date = format.parse(birthday);
+            SimpleDateFormat newFormat = new SimpleDateFormat("MMddyyyy", Locale.ENGLISH);
+            String newDate = newFormat.format(date);
+
+            List<UiObject2> fields = mDevice.findObjects(By.clazz("android.widget.EditText"));
+
+            for (int i = 0; i < fields.size(); i++) {
+                fields.get(i).setText(newDate.substring(i, i + 1));
+            }
+
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_birthday_button")).click();
+
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/gender_female_selection_button")).click();
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_gender_continue_button")).click();
+
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_add_photo_plus_circle")).click();
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/photo_source_selector_gallery")).click();
+
+            addPhoto();
+
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_add_photo_done_button")).click();
+        }
+    }
+
+    private void fillProfile() throws UiObjectNotFoundException {
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_profile")).click();
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_edit_button")).click();
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_image_action_3")).click();
+
+        addPhoto();
+
+        UiScrollable scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView").resourceId("com.tinder:id/scrollView"));
+        scrollView.scrollForward();
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/editText_bio")).setText("Bio bio bio bio bio");
+        //todo anthem
+
+        mDevice.pressBack();
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_settings_button")).click();
+
+        scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
+        scrollView.scrollForward();
+
+
+//        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/textView_distance"))
+        UiObject distanceBar = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/seekBar_distance"));
+        Rect distanceBounds = distanceBar.getBounds();
+        int y = distanceBounds.centerY();
+        int x = distanceBounds.left + distanceBounds.width() * DISTANCE_IN_MILES / 100;
+        mDevice.click(x, y);
+//
+//        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/textView_years"))
+//        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/seekBar_distance"))
+
+        mDevice.pressBack();
+    }
+
+    private void addPhoto() throws UiObjectNotFoundException {
+        String id = "com.tinder:id/photo_permission_dialog_button_positive";
+        AppsAuto.clickIfExistsById(mDevice, id);
+
+        AppsAuto.clickIfExistsByText(mDevice, "ALLOW");
+
+        UiObject gallery = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/text_albumName").text("Gallery"));
+        if (gallery.exists()) {
+            gallery.click();
+        }
+
+        clickIfExistsByText(mDevice, "com.simplemobiletools.gallery");
+        mDevice.findObject(new UiSelector().resourceId("android:id/button_once")).click();
+
+
+        mDevice.findObject(new UiSelector().resourceId("com.simplemobiletools.gallery:id/dir_thumbnail")).click();
+
+        List<UiObject2> images = mDevice.findObjects(By.res("com.simplemobiletools.gallery:id/medium_thumbnail"));
+
+        Random random = new Random();
+        images.get(random.nextInt(images.size())).click();
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/crop_image_menu_crop")).click();
+
+    }
+
+    private void inputAndVerifyPhone(String phone) throws UiObjectNotFoundException, IOException, ParseException {
+        //phone
+        if (!mDevice.wait(Until.hasObject(By.text("Enter your mobile number")), LAUNCH_TIMEOUT)) {
+            return;
+        }
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/country_code")).click();
+
+        UiScrollable listView = new UiScrollable(new UiSelector().className("android.widget.ListView").resourceId("android:id/select_dialog_listview"));
+        UiSelector uiSelector = new UiSelector().textContains(COUNTRY);
+
+        listView.scrollBackward();
+        UiObject child = listView.getChild(uiSelector);
+
+        if (!child.exists()) {
+            listView.scrollIntoView(uiSelector);
+            child = listView.getChild(uiSelector);
+        }
+
+        child.click();
+        long phoneTime = new Date().getTime();
+
         String localPhone = phone;
         if (phone.startsWith(COUNTRY_CODE)) {
             localPhone = phone.substring(COUNTRY_CODE.length());
         }
 
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/phone_input")).setText(localPhone);
-        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
-    }
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/com_accountkit_phone_number")).setText(localPhone);
+        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/com_accountkit_next_button")).click();
 
-    private void enterSex() throws UiObjectNotFoundException {
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/gender_female")).click();
-        mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/finish_button")).click();
-    }
+        //sms
+        UiObject smsButton = mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/com_accountkit_next_button"));
 
-    private void enterBirthday() throws Exception {
-        String birthday = Utils.getRandomLine(FILE_BIRTHDAYS);
-        String[] parts = birthday.split("-");  //format: 01-Jan-2000
+        if (smsButton.waitForExists(FIND_TIMEOUT)) {
+            UiObject smsTitle = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/com_accountkit_title"));
 
-        List<UiObject2> inputs = mDevice.findObjects(By.clazz(EditText.class).res("android:id/numberpicker_input"));
+            if (!smsTitle.getText().contains("verified")) {
 
-        if (inputs.size() == 3) {
-            //month
-            inputs.get(0).click();
-            inputs.get(0).setText(parts[1]);
-            //day
-            inputs.get(1).click();
-            inputs.get(1).setText(parts[0]);
-            //year
-            inputs.get(2).click();
-            inputs.get(2).setText(parts[2]);
-            inputs.get(0).click();
+                String code = new TinderSmsParser().getCode(phone, phoneTime - 20000, 30, 2000);
 
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                if (TextUtils.isEmpty(code)) {
+                    fail("No tinder code received");
+                }
+
+                for (int i = 1; i <= 6; i++) {
+                    mDevice.findObject(new UiSelector().resourceId("com.tinder:id/com_accountkit_confirmation_code_" + i)).setText(code.substring(i - 1, i));
+                }
             }
+
+            mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/com_accountkit_next_button")).click();
+        } else {
+            Log.w("TinderAuto", "No SMS requested");
         }
 
-        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
-
-        // is today your birthday / is your age ...
-        pressMultipleTimes("YES");
-    }
-
-    private void enterName() throws Exception {
-        String firstName = Utils.getRandomLine(FILE_NAMES);
-        String lastName = Utils.getRandomLine(FILE_SURNAMES);
-
-        mDevice.findObject(new UiSelector().className(EditText.class).resourceId("com.facebook.katana:id/first_name_input")).setText(firstName);
-        mDevice.findObject(new UiSelector().className(EditText.class).resourceId("com.facebook.katana:id/last_name_input")).setText(lastName);
-        mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/finish_button")).click();
-    }
-
-    private void pressMultipleTimes(String text) throws UiObjectNotFoundException {
-        try {
-            while (true) {
-                mDevice.findObject(new UiSelector().textMatches("(?i)" + text)).click();
-            }
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
-        }
     }
 }
