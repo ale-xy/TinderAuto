@@ -3,11 +3,18 @@ package name.alexy.test.tinderauto;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.test.InstrumentationRegistry;
+import android.text.TextUtils;
 
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.HashSet;
+import java.util.ListIterator;
 import java.util.Set;
+
+import name.alexy.test.tinderauto.phoneservice.FacebookSmsParser;
+import name.alexy.test.tinderauto.phoneservice.Phone;
+import name.alexy.test.tinderauto.phoneservice.PhoneData;
+import name.alexy.test.tinderauto.phoneservice.PhoneServiceApi;
 
 /**
  * Created by alexeykrichun on 05/10/2017.
@@ -19,27 +26,27 @@ public class PhoneSmsHelper {
     private static final String USED_PHONES_SET = "USED_PHONES_SET";
 
     public static String getFacebookFreePhoneNumber() throws IOException, ParseException {
-        return "447417247109";
+//        return "447417250209"; 447417258425
 
-//
-//        PhoneData phoneData = PhoneServiceApi.service.getPhoneData().execute().body();
-//
-//        Set<String> usedPhones = getUsedPhones();
-//
-//        if (phoneData != null && phoneData.getPhones() != null) {
-//            ListIterator<Phone> iterator = phoneData.getPhones().listIterator(phoneData.getPhones().size());
-//            while (iterator.hasPrevious()){
-//                Phone phone = iterator.previous();
-//                System.out.println("Checking phone " + phone.getNumber());
-//                if (TextUtils.isEmpty(new FacebookSmsParser().getCode(phone.getNumber(), 0L)) &&
-//                        (usedPhones == null || !usedPhones.contains(phone.getNumber()))) {
-//                    System.out.println("Found phone without sms " + phone.getNumber());
-//                    return phone.getNumber();
-//                }
-//            }
-//        }
-//        System.out.println("Phone not found");
-//        return null;
+
+        PhoneData phoneData = PhoneServiceApi.service.getPhoneData().execute().body();
+
+        Set<String> usedPhones = getUsedPhones();
+
+        if (phoneData != null && phoneData.getPhones() != null) {
+            ListIterator<Phone> iterator = phoneData.getPhones().listIterator(phoneData.getPhones().size());
+            while (iterator.hasPrevious()){
+                Phone phone = iterator.previous();
+                System.out.println("Checking phone " + phone.getNumber());
+                if ((usedPhones == null || !usedPhones.contains(phone.getNumber())) &&
+                        TextUtils.isEmpty(new FacebookSmsParser().getCode(phone.getNumber(), 0L))) {
+                    System.out.println("Found phone without sms " + phone.getNumber());
+                    return phone.getNumber();
+                }
+            }
+        }
+        System.out.println("Phone not found");
+        return null;
     }
 
     private static Set<String> getUsedPhones() {

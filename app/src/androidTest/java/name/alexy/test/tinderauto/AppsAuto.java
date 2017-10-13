@@ -24,13 +24,14 @@ import static org.junit.Assert.fail;
 @SdkSuppress(minSdkVersion = 18)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AppsAuto {
-    static final int LAUNCH_TIMEOUT = 15000;
+    static final int LAUNCH_TIMEOUT = 30000;
     static final int FIND_TIMEOUT = 5000;
-    static final String FIRST_NAME = "Vasya";
-    static final String LAST_NAME = "Pupkin";
+    static final int FIND_TIMEOUT_SHORT = 500;
+    static final int SMS_REPEAT = 5;
+    static final int SMS_DELAY = 2000;
+
     static final String COUNTRY = "United Kingdom";
     static final String COUNTRY_CODE = "44";
-//    private static final String PHONE = "447893364366";
     static final String PASSWORD = "QpAlZm102938";
 
     static final String FILE_NAMES = "names.txt";
@@ -55,19 +56,19 @@ public class AppsAuto {
 
     @Test
     public void play() throws Exception {
-        String phone = PhoneSmsHelper.getFacebookFreePhoneNumber();
+        FacebookAuto facebookAuto = new FacebookAuto(mDevice);
+
+        String phone = facebookAuto.createFacebookAccount();
 
         if (TextUtils.isEmpty(phone)) {
             fail("No phone number");
             return;
         }
 
-//        FacebookAuto facebookAuto = new FacebookAuto(mDevice);
-//        facebookAuto.createFacebookAccount(phone);
-
         TinderAuto tinderAuto = new TinderAuto(mDevice);
-        tinderAuto.runTinder(phone, true);
-        tinderAuto.runTinder(phone, false);
+        tinderAuto.runTinder(phone, true, true);
+//        Runtime.getRuntime().exec(new String[] {"am", "force-stop", TinderAuto.TINDER_PACKAGE});
+        tinderAuto.runTinder(phone, false, false);
 
     }
 

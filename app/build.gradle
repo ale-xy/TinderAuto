@@ -40,15 +40,22 @@ dependencies {
 
 task clearData {
     doLast {
-        exec {
-            executable android.getAdbExe()
-//            args "shell", "pm clear com.facebook.katana"
-            args "shell", "pm clear com.tinder"
-//            standardOutput = execStdOut
-//            errorOutput = execStderr
+        new ByteArrayOutputStream().withStream { os ->
+            exec {
+                executable android.getAdbExe()
+                args "shell", "pm clear com.facebook.katana"
+                standardOutput = os
+                errorOutput = os
+            }
+            exec {
+                executable android.getAdbExe()
+                args "shell", "pm clear com.tinder"
+                standardOutput = os
+                errorOutput = os
+            }
+            println os.toString().trim()
+
         }
-//        println execStdOut.toString().trim()
-//        println execStdErr.toString().trim()
     }
 }
 

@@ -44,7 +44,9 @@ import static name.alexy.test.tinderauto.AppsAuto.clickIfExistsByText;
 public class TinderAuto {
     static final String TINDER_PACKAGE = "com.tinder";
     public static final int DISTANCE_IN_MILES = 30;
-    private static final int LIKES_AMOUNT = 100;
+    private static final int LIKES_AMOUNT = 10;
+    private static final int AUTH_RETRY_COUNT = 10;
+    public static final String GOOGLE_MAPS_PACKAGE = "com.google.android.apps.maps";
 
     private final UiDevice mDevice;
 
@@ -52,26 +54,38 @@ public class TinderAuto {
         this.mDevice = mDevice;
     }
 
-    void runTinder(String phone, boolean facebook) throws Exception {
+    void runTinder(String phone, boolean facebook, boolean launch) throws Exception {
 
-        // Launch the app
-        Context context = InstrumentationRegistry.getContext();
-        final Intent intent = context.getPackageManager().getLaunchIntentForPackage(TINDER_PACKAGE);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        context.startActivity(intent);
+        if (launch) {
+            launchTinder();
+        }
 
         mDevice.wait(Until.hasObject(By.pkg(TINDER_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
 
         if (facebook) {
-            mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/real_facebook_login_button")).click();
+            UiObject error = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/txt_dialog_title").textContains("went wrong"));
+            int retries = 0;
 
-            UiObject fbButton = mDevice.findObject(new UiSelector().className(Button.class).packageName("com.facebook.katana").resourceId("u_0_9"));
+            do {
+                mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/real_facebook_login_button")).click();
 
-            if (fbButton.waitForExists(FIND_TIMEOUT)) {
-                fbButton.click();
-            } else {
-                Log.d("TinderAuto", "No FB auth");
-            }
+                UiObject fbButton = mDevice.findObject(new UiSelector().className(Button.class).packageName("com.facebook.katana").resourceId("u_0_9"));
+
+                if (fbButton.waitForExists(LAUNCH_TIMEOUT)) {
+                    fbButton.click();
+                } else {
+                    Log.d("TinderAuto", "No FB auth");
+                }
+
+                if (error.waitForExists(300)) {
+                    mDevice.findObject(new UiSelector().resourceId("com.tinder:id/txt_mono_choice")).click();
+                }
+
+                if (retries >= AUTH_RETRY_COUNT) {
+                    fail("Can't login to Tinder with Facebook");
+                }
+                retries++;
+            } while (error.exists());
 
             inputAndVerifyPhone(phone);
         } else {
@@ -88,11 +102,46 @@ public class TinderAuto {
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_flame")).click();
 
+
+        UiObject wrong = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/recs_status_message").textContains("wrong"));
+
+
+
+        int retries = 0;
+        while (wrong.waitForExists(FIND_TIMEOUT)) {
+            if (retries > AUTH_RETRY_COUNT) {
+                fail("Something went wrong with Tinder");
+            }
+
+            mDevice.pressBack();
+
+            Context context = InstrumentationRegistry.getContext();
+            final Intent intent = context.getPackageManager().getLaunchIntentForPackage(GOOGLE_MAPS_PACKAGE);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            context.startActivity(intent);
+            mDevice.wait(Until.hasObject(By.pkg(GOOGLE_MAPS_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
+
+            mDevice.findObject(new UiSelector().resourceId("com.google.android.apps.maps:id/mylocation_button")).click();
+            Thread.sleep(3000);
+
+            launchTinder();
+            mDevice.wait(Until.hasObject(By.pkg(TINDER_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
+            retries++;
+        }
+
         like();
 
         logout();
 
 
+    }
+
+    private void launchTinder() {
+        // Launch the app
+        Context context = InstrumentationRegistry.getContext();
+        final Intent intent = context.getPackageManager().getLaunchIntentForPackage(TINDER_PACKAGE);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent);
     }
 
     private void logout() throws UiObjectNotFoundException {
@@ -126,7 +175,7 @@ public class TinderAuto {
     private void phoneRegistration() throws UiObjectNotFoundException, IOException, ParseException {
         //email
         UiObject emailSkip = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_skip_button"));
-        if (emailSkip.exists()) {
+        if (emailSkip.waitForExists(FIND_TIMEOUT)) {
             emailSkip.click();
             mDevice.findObject(new UiSelector().text("YES")).click();
 
@@ -174,6 +223,7 @@ public class TinderAuto {
         addPhoto();
 
         UiScrollable scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView").resourceId("com.tinder:id/scrollView"));
+
         scrollView.scrollForward();
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/editText_bio")).setText("Bio bio bio bio bio");
@@ -181,14 +231,22 @@ public class TinderAuto {
 
         mDevice.pressBack();
 
+        if (mDevice.findObject(new UiSelector().resourceId("com.tinder:id/intro_top_section")).exists()) {
+            mDevice.pressBack();
+        }
+
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_settings_button")).click();
 
         scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView"));
-        scrollView.scrollForward();
 
 
 //        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/textView_distance"))
         UiObject distanceBar = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/seekBar_distance"));
+
+        while (!distanceBar.exists()) {
+            scrollView.scrollForward();
+        }
+
         Rect distanceBounds = distanceBar.getBounds();
         int y = distanceBounds.centerY();
         int x = distanceBounds.left + distanceBounds.width() * DISTANCE_IN_MILES / 100;
@@ -263,7 +321,7 @@ public class TinderAuto {
 
             if (!smsTitle.getText().contains("verified")) {
 
-                String code = new TinderSmsParser().getCode(phone, phoneTime - 20000, 30, 2000);
+                String code = new TinderSmsParser().getCode(phone, phoneTime - 20000, AppsAuto.SMS_REPEAT, AppsAuto.SMS_DELAY);
 
                 if (TextUtils.isEmpty(code)) {
                     fail("No tinder code received");
