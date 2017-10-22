@@ -15,7 +15,7 @@ import java.util.Random;
  */
 
 public class Utils {
-    public static String runADBCommand(String adbCommand) throws IOException {
+    public static void runADBCommand(String adbCommand) throws IOException {
         String returnValue = "";
 
         System.out.println("running " + adbCommand);
@@ -42,9 +42,6 @@ public class Utils {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-        System.out.println("Return " + returnValue);
-        return returnValue;
     }
 
     public static String getRandomLine(String fileName) throws IOException {

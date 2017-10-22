@@ -9,12 +9,15 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 import android.text.TextUtils;
+import android.util.Log;
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+
+import java.util.regex.Pattern;
 
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -25,9 +28,9 @@ import static org.junit.Assert.fail;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AppsAuto {
     static final int LAUNCH_TIMEOUT = 30000;
-    static final int FIND_TIMEOUT = 5000;
-    static final int FIND_TIMEOUT_SHORT = 500;
-    static final int SMS_REPEAT = 5;
+    static final int FIND_TIMEOUT = 7000;
+    static final int FIND_TIMEOUT_SHORT = 1000;
+    static final int SMS_REPEAT = 30;
     static final int SMS_DELAY = 2000;
 
     static final String COUNTRY = "United Kingdom";
@@ -39,11 +42,15 @@ public class AppsAuto {
     static final String FILE_BIRTHDAYS = "birthdays.txt";
 
     private UiDevice mDevice;
+    private TinderAuto tinderAuto;
+
 
     @Before
-    public void init() throws Exception {
-
+    public void init() {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+    }
+
+    private void pressHome() {
         mDevice.pressHome();
 
         //todo storage permissions
@@ -56,46 +63,71 @@ public class AppsAuto {
 
     @Test
     public void play() throws Exception {
+        pressHome();
+
         FacebookAuto facebookAuto = new FacebookAuto(mDevice);
 
-        String phone = facebookAuto.createFacebookAccount();
+        String phone = "447700375095";//facebookAuto.createFacebookAccount();
 
         if (TextUtils.isEmpty(phone)) {
             fail("No phone number");
             return;
         }
 
-        TinderAuto tinderAuto = new TinderAuto(mDevice);
+        tinderAuto = new TinderAuto(mDevice);
         tinderAuto.runTinder(phone, true, true);
-//        Runtime.getRuntime().exec(new String[] {"am", "force-stop", TinderAuto.TINDER_PACKAGE});
         tinderAuto.runTinder(phone, false, false);
+
+    }
+
+    @Test
+    public void continueAfterPhoneReg() throws Exception {
+        tinderAuto = new TinderAuto(mDevice);
+        tinderAuto.continueAfterPhoneRegistration();
 
     }
 
     static void pressMultipleTimes(UiDevice device, String text) throws UiObjectNotFoundException {
         try {
             while (true) {
+                Log.d("AppsAuto", "pressMultipleTimes " + text);
                 device.findObject(new UiSelector().textMatches("(?i)" + text)).click();
             }
         } catch (UiObjectNotFoundException e) {
+            Log.d("AppsAuto", "no more " + text);
             e.getMessage();
         }
     }
 
     static boolean clickIfExistsById(UiDevice mDevice, String id) throws UiObjectNotFoundException {
-        if (!mDevice.wait(Until.hasObject(By.res(id)), FIND_TIMEOUT)) {
+        return clickIfExistsById(mDevice, id, FIND_TIMEOUT);
+    }
+
+    static boolean clickIfExistsById(UiDevice mDevice, String id, long timeout) throws UiObjectNotFoundException {
+        Log.d("AppsAuto", "clickIfExistsById " + id);
+        if (!mDevice.wait(Until.hasObject(By.res(id)), timeout)) {
+            Log.d("AppsAuto", id + " not found ");
             return false;
         }
 
         mDevice.findObject(new UiSelector().resourceId(id)).click();
+        Log.d("AppsAuto", id + " found ");
         return true;
     }
 
     static boolean clickIfExistsByText(UiDevice mDevice, String text) throws UiObjectNotFoundException {
-        if (!mDevice.wait(Until.hasObject(By.text(text)), FIND_TIMEOUT)) {
+        return clickIfExistsByText(mDevice, text, FIND_TIMEOUT);
+    }
+
+    static boolean clickIfExistsByText(UiDevice mDevice, String text, long timeout) throws UiObjectNotFoundException {
+        Log.d("AppsAuto", "clickIfExistsByText " + text);
+        text = "(?i)" + text;
+        if (!mDevice.wait(Until.hasObject(By.text(Pattern.compile(text))), timeout)) {
+            Log.d("AppsAuto", text + " not found ");
             return false;
         }
-        mDevice.findObject(new UiSelector().text(text)).click();
+        mDevice.findObject(new UiSelector().textMatches(text)).click();
+        Log.d("AppsAuto", text + " found ");
         return true;
     }
 

@@ -57,6 +57,7 @@ public class TinderAuto {
     void runTinder(String phone, boolean facebook, boolean launch) throws Exception {
 
         if (launch) {
+            launchMaps();
             launchTinder();
         }
 
@@ -73,6 +74,10 @@ public class TinderAuto {
 
                 if (fbButton.waitForExists(LAUNCH_TIMEOUT)) {
                     fbButton.click();
+                }
+
+                if (fbButton.waitForExists(FIND_TIMEOUT)) {
+                    fbButton.click();
                 } else {
                     Log.d("TinderAuto", "No FB auth");
                 }
@@ -88,24 +93,30 @@ public class TinderAuto {
             } while (error.exists());
 
             inputAndVerifyPhone(phone);
+            fillProfileAndLike(true);
         } else {
             mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/alternative_login_button")).click();
             inputAndVerifyPhone(phone);
             phoneRegistration();
         }
+    }
 
+    public void continueAfterPhoneRegistration() throws Exception {
+        //launchTinder();
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_add_photo_done_button")).click();
+        fillProfileAndLike(false);
+    }
+
+    private void fillProfileAndLike(boolean facebook) throws UiObjectNotFoundException, InterruptedException {
         //allow location
         mDevice.wait(Until.hasObject(By.text("ALLOW")), FIND_TIMEOUT);
         AppsAuto.pressMultipleTimes(mDevice, "ALLOW");
 
-        fillProfile();
+        fillProfile(facebook? 2 : 1);
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_flame")).click();
 
-
-        UiObject wrong = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/recs_status_message").textContains("wrong"));
-
-
+        UiObject wrong = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/recs_status_message").textContains("wrong")); //todo nobody
 
         int retries = 0;
         while (wrong.waitForExists(FIND_TIMEOUT)) {
@@ -115,14 +126,7 @@ public class TinderAuto {
 
             mDevice.pressBack();
 
-            Context context = InstrumentationRegistry.getContext();
-            final Intent intent = context.getPackageManager().getLaunchIntentForPackage(GOOGLE_MAPS_PACKAGE);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            context.startActivity(intent);
-            mDevice.wait(Until.hasObject(By.pkg(GOOGLE_MAPS_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
-
-            mDevice.findObject(new UiSelector().resourceId("com.google.android.apps.maps:id/mylocation_button")).click();
-            Thread.sleep(3000);
+            launchMaps();
 
             launchTinder();
             mDevice.wait(Until.hasObject(By.pkg(TINDER_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
@@ -132,8 +136,17 @@ public class TinderAuto {
         like();
 
         logout();
+    }
 
+    private void launchMaps() throws UiObjectNotFoundException, InterruptedException {
+        Context context = InstrumentationRegistry.getContext();
+        final Intent intent = context.getPackageManager().getLaunchIntentForPackage(GOOGLE_MAPS_PACKAGE);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        context.startActivity(intent);
+        mDevice.wait(Until.hasObject(By.pkg(GOOGLE_MAPS_PACKAGE).depth(0)), LAUNCH_TIMEOUT);
 
+        mDevice.findObject(new UiSelector().resourceId("com.google.android.apps.maps:id/mylocation_button")).click();
+        Thread.sleep(3000);
     }
 
     private void launchTinder() {
@@ -170,9 +183,10 @@ public class TinderAuto {
             }
 
         }
+        clickIfExistsById(mDevice, "com.tinder:id/btn_find_more_matches");
     }
 
-    private void phoneRegistration() throws UiObjectNotFoundException, IOException, ParseException {
+    private void phoneRegistration() throws Exception {
         //email
         UiObject emailSkip = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_skip_button"));
         if (emailSkip.waitForExists(FIND_TIMEOUT)) {
@@ -192,6 +206,7 @@ public class TinderAuto {
             Date date = format.parse(birthday);
             SimpleDateFormat newFormat = new SimpleDateFormat("MMddyyyy", Locale.ENGLISH);
             String newDate = newFormat.format(date);
+            Log.d("TinderAuto", "birthday "+newDate);
 
             List<UiObject2> fields = mDevice.findObjects(By.clazz("android.widget.EditText"));
 
@@ -209,18 +224,20 @@ public class TinderAuto {
 
             addPhoto();
 
-            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_add_photo_done_button")).click();
+//            Coordinates.setNewLocation();
+
         }
     }
 
-    private void fillProfile() throws UiObjectNotFoundException {
+    private void fillProfile(int numPhotos) throws UiObjectNotFoundException {
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_profile")).click();
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_edit_button")).click();
 
-        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_image_action_3")).click();
-
-        addPhoto();
+        for (int i = 0; i < numPhotos; i++) {
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_image_action_5")).click();
+            addPhoto();
+        }
 
         UiScrollable scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView").resourceId("com.tinder:id/scrollView"));
 

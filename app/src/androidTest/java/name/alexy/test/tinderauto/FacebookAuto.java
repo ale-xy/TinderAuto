@@ -25,6 +25,7 @@ import static name.alexy.test.tinderauto.AppsAuto.COUNTRY_CODE;
 import static name.alexy.test.tinderauto.AppsAuto.FILE_BIRTHDAYS;
 import static name.alexy.test.tinderauto.AppsAuto.FILE_NAMES;
 import static name.alexy.test.tinderauto.AppsAuto.FILE_SURNAMES;
+import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT_SHORT;
 import static name.alexy.test.tinderauto.AppsAuto.LAUNCH_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.PASSWORD;
@@ -45,6 +46,7 @@ public class FacebookAuto {
 
 
     String createFacebookAccount() throws Exception {
+
         String phone = PhoneSmsHelper.getFacebookFreePhoneNumber();
         if (TextUtils.isEmpty(phone)) {
             return null;
@@ -113,28 +115,33 @@ public class FacebookAuto {
         mDevice.wait(Until.hasObject(By.text("DENY")), FIND_TIMEOUT_SHORT);
         pressMultipleTimes(mDevice, "DENY");
 
-        try {
-            //save password
-            mDevice.wait(Until.hasObject(By.text("SAVE PASSWORD")), FIND_TIMEOUT_SHORT);
-            mDevice.findObject(new UiSelector().className(Button.class).text("SAVE PASSWORD")).click();
-        } catch (UiObjectNotFoundException e) {
-            e.getMessage();
+        //save password
+        Log.d("FacebookAuto", "waiting for SAVE PASSWORD");
+        UiObject savePassword = mDevice.findObject(new UiSelector().textMatches("(?i)SAVE PASSWORD"));
+
+        if (savePassword.waitForExists(FIND_TIMEOUT)){
+            savePassword.click();
+        } else {
+            Log.d("FacebookAuto", "no SAVE PASSWORD");
         }
 
         try {
             //Next Time, Log In With One Tap
+            Log.d("FacebookAuto", "waiting for Next Time, Log In With One Tap");
             mDevice.wait(Until.hasObject(By.text("Next Time, Log In With One Tap")), FIND_TIMEOUT_SHORT);
-            mDevice.findObject(new UiSelector().className(Button.class).text("OK")).click();
+            mDevice.findObject(new UiSelector().text("OK")).click();
         } catch (UiObjectNotFoundException e) {
+            Log.d("FacebookAuto", "no Next Time, Log In With One Tap");
             e.getMessage();
         }
 
         try {
             //Log In With One Tap
+            Log.d("FacebookAuto", "waiting for Next Time, Log In With One Tap");
             mDevice.wait(Until.hasObject(By.text("Log In With One Tap")), FIND_TIMEOUT_SHORT);
-
             mDevice.findObject(new UiSelector().className(Button.class).textMatches("(OK)|(Continue)")).click();
         } catch (UiObjectNotFoundException e) {
+            Log.d("FacebookAuto", "no Log In With One Tap");
             e.getMessage();
         }
 
@@ -142,6 +149,7 @@ public class FacebookAuto {
         UiObject skip = mDevice.findObject(new UiSelector().textMatches("(?i)SKIP"));
 
         do {
+            Log.d("FacebookAuto", "waiting for sms title");
             if (!smsTitle.waitForExists(500) && skip.exists()) {
                 skip.click();
             }
@@ -150,6 +158,7 @@ public class FacebookAuto {
         //sms
 
         if (smsTitle.exists()) {
+            Log.d("FacebookAuto", "sms title found");
             String code = new FacebookSmsParser().getCode(phone, phoneTime - 20000, AppsAuto.SMS_REPEAT, AppsAuto.SMS_DELAY);
 
             if (TextUtils.isEmpty(code)) {
