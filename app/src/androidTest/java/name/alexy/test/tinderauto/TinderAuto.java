@@ -72,6 +72,8 @@ public class TinderAuto {
 
                 UiObject fbButton = mDevice.findObject(new UiSelector().className(Button.class).packageName("com.facebook.katana").resourceId("u_0_9"));
 
+                Log.d("TinderAuto", "Searching for FB button");
+
                 if (fbButton.waitForExists(LAUNCH_TIMEOUT)) {
                     fbButton.click();
                 }

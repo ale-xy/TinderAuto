@@ -41,12 +41,12 @@ dependencies {
 task clearData {
     doLast {
         new ByteArrayOutputStream().withStream { os ->
-//            exec {
-//                executable android.getAdbExe()
-//                args "shell", "pm clear com.facebook.katana"
-//                standardOutput = os
-//                errorOutput = os
-//            }
+            exec {
+                executable android.getAdbExe()
+                args "shell", "pm clear com.facebook.katana"
+                standardOutput = os
+                errorOutput = os
+            }
             exec {
                 executable android.getAdbExe()
                 args "shell", "pm clear com.tinder"

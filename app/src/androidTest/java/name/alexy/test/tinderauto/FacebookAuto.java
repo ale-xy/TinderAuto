@@ -29,6 +29,7 @@ import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT_SHORT;
 import static name.alexy.test.tinderauto.AppsAuto.LAUNCH_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.PASSWORD;
+import static name.alexy.test.tinderauto.AppsAuto.SMS_NEXT_NUMBER_RETRY;
 import static name.alexy.test.tinderauto.AppsAuto.pressMultipleTimes;
 import static org.junit.Assert.fail;
 
@@ -187,6 +188,8 @@ public class FacebookAuto {
         String phone;
         String code;
 
+        int retries = 0;
+
         do {
             mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/conf_code_bottom_option_2")).click();
             phone = PhoneSmsHelper.getFacebookFreePhoneNumber();
@@ -204,7 +207,12 @@ public class FacebookAuto {
             if (TextUtils.isEmpty(code)) {
                 Log.e("FacebookAuto", "No facebook code received");
             }
-        } while (TextUtils.isEmpty(code));
+
+        } while (TextUtils.isEmpty(code) && retries++ < SMS_NEXT_NUMBER_RETRY);
+
+        if (TextUtils.isEmpty(code)) {
+            fail("No SMS received");
+        }
 
         mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/code_input")).setText(code);
         mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.facebook.katana:id/continue_button")).click();

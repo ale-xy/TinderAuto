@@ -32,6 +32,7 @@ public class AppsAuto {
     static final int FIND_TIMEOUT_SHORT = 1000;
     static final int SMS_REPEAT = 30;
     static final int SMS_DELAY = 2000;
+    static final int SMS_NEXT_NUMBER_RETRY = 2;
 
     static final String COUNTRY = "United Kingdom";
     static final String COUNTRY_CODE = "44";
@@ -67,7 +68,7 @@ public class AppsAuto {
 
         FacebookAuto facebookAuto = new FacebookAuto(mDevice);
 
-        String phone = "447700375095";//facebookAuto.createFacebookAccount();
+        String phone = facebookAuto.createFacebookAccount();
 
         if (TextUtils.isEmpty(phone)) {
             fail("No phone number");

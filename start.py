@@ -1,5 +1,6 @@
 import os
 import random
+import subprocess
 import telnetlib
 import time
 from os.path import expanduser
@@ -27,13 +28,40 @@ def setRandomLocation():
     print telnet.read_eager()
     telnet.close()
 
-os.system("./gradlew app:clearData")
+def runCommand(command):
+    result = os.system(command)
+    if (result != 0):
+        raise OSError("Execution failed")
+
+print("Installing...")
+runCommand("./gradlew installDebug installDebugAndroidTest")
+print("Clear data...")
+runCommand("./gradlew app:clearData")
+
+print("Set location...")
 setRandomLocation()
 
-os.system("adb shell am force-stop name.alexy.test.tinderauto")
-os.system("adb shell am force-stop name.alexy.test.tinderauto.test")
-os.system("adb shell am instrument -w -r   -e debug false -e class name.alexy.test.tinderauto.AppsAuto#play name.alexy.test.tinderauto.test/android.support.test.runner.AndroidJUnitRunner")
+print("Restarting...")
+runCommand("adb shell am force-stop name.alexy.test.tinderauto")
+runCommand("adb shell am force-stop name.alexy.test.tinderauto.test")
 
+print("Runing scenario step 1...")
+
+
+def runTest(test):
+    print "Running %s..." % test
+    result = subprocess.check_output(
+        "adb shell am instrument -w -r  -e debug false -e class name.alexy.test.tinderauto.AppsAuto#%s name.alexy.test.tinderauto.test/android.support.test.runner.AndroidJUnitRunner" % test,
+        shell=True,
+        stderr=subprocess.STDOUT)
+    print result
+    if result.find("FAILURES!!!") >= 0:
+        raise OSError("Execution failed")
+
+
+runTest("play")
+
+print("Set location...")
 setRandomLocation()
 
-os.system("adb shell am instrument -w -r   -e debug false -e class name.alexy.test.tinderauto.AppsAuto#continueAfterPhoneReg name.alexy.test.tinderauto.test/android.support.test.runner.AndroidJUnitRunner")
+runTest("continueAfterPhoneReg")
