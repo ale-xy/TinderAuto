@@ -34,9 +34,9 @@ def runCommand(command):
         raise OSError("Execution failed")
 
 print("Installing...")
-runCommand("./gradlew installDebug installDebugAndroidTest")
+runCommand("gradlew installDebug installDebugAndroidTest")
 print("Clear data...")
-runCommand("./gradlew app:clearData")
+runCommand("gradlew app:clearData")
 
 print("Set location...")
 setRandomLocation()
