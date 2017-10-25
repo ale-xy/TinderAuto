@@ -5,6 +5,7 @@ import telnetlib
 import time
 from os.path import expanduser
 
+NUMBER_OF_EXECUTIONS = 10
 
 def nextCoords():
     lines = open('coordinates.txt').read().splitlines()
@@ -33,21 +34,6 @@ def runCommand(command):
     if (result != 0):
         raise OSError("Execution failed")
 
-print("Installing...")
-runCommand("gradlew installDebug installDebugAndroidTest")
-print("Clear data...")
-runCommand("gradlew app:clearData")
-
-print("Set location...")
-setRandomLocation()
-
-print("Restarting...")
-runCommand("adb shell am force-stop name.alexy.test.tinderauto")
-runCommand("adb shell am force-stop name.alexy.test.tinderauto.test")
-
-print("Runing scenario step 1...")
-
-
 def runTest(test):
     print ("Running %s..." % test)
     result = subprocess.check_output(
@@ -59,9 +45,37 @@ def runTest(test):
         raise OSError("Execution failed")
 
 
-runTest("play")
+print("Installing...")
+runCommand("gradlew installDebug installDebugAndroidTest")
 
-print("Set location...")
-setRandomLocation()
+execution = 0
 
-runTest("continueAfterPhoneReg")
+while execution < NUMBER_OF_EXECUTIONS:
+    print("========= Run number %d" % execution)
+    print("Clear data...")
+    runCommand("gradlew app:clearData")
+    execution = execution + 1
+
+    print("Set location...")
+    setRandomLocation()
+
+    print("Restarting...")
+    runCommand("adb shell am force-stop name.alexy.test.tinderauto")
+    runCommand("adb shell am force-stop name.alexy.test.tinderauto.test")
+
+    try:
+        runTest("play")
+    except Exception as exception:
+        print "Error %s" % exception.message
+        continue
+
+    print("Set location...")
+    setRandomLocation()
+
+    try:
+        runTest("continueAfterPhoneReg")
+    except Exception as exception:
+        print "Error %s" % exception.message
+        continue
+
+print "Finished"
