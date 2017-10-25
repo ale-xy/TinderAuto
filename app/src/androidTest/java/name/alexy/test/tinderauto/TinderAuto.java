@@ -193,11 +193,11 @@ public class TinderAuto {
         if (emailSkip.waitForExists(FIND_TIMEOUT)) {
             emailSkip.click();
             mDevice.findObject(new UiSelector().text("YES")).click();
-
+            waitLoading();
             //password
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_password_edit_text")).setText(PASSWORD);
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_password_action_button")).click();
-
+            waitLoading();
             String firstName = Utils.getRandomLine(FILE_NAMES);
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_name_edit_text")).setText(firstName);
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_name_add_button")).click();
@@ -209,6 +209,8 @@ public class TinderAuto {
             String newDate = newFormat.format(date);
             Log.d("TinderAuto", "birthday "+newDate);
 
+            waitLoading();
+
             List<UiObject2> fields = mDevice.findObjects(By.clazz("android.widget.EditText"));
 
             for (int i = 0; i < fields.size(); i++) {
@@ -217,9 +219,11 @@ public class TinderAuto {
 
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_birthday_button")).click();
 
+            waitLoading();
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/gender_female_selection_button")).click();
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_gender_continue_button")).click();
 
+            waitLoading();
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_add_photo_plus_circle")).click();
             mDevice.findObject(new UiSelector().resourceId("com.tinder:id/photo_source_selector_gallery")).click();
 
@@ -228,6 +232,14 @@ public class TinderAuto {
 //            Coordinates.setNewLocation();
 
         }
+    }
+
+    private void waitLoading() throws InterruptedException {
+        UiObject loading = mDevice.findObject(new UiSelector().textStartsWith("Loading"));
+
+        do {
+            Thread.sleep(200);
+        } while (loading.waitForExists(100));
     }
 
     private void fillProfile(int numPhotos) throws UiObjectNotFoundException, IOException {
