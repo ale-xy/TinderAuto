@@ -64,6 +64,10 @@ public class AppsAuto {
 
     @Test
     public void play() throws Exception {
+        OperaVpnAuto operaVpnAuto = new OperaVpnAuto(mDevice);
+        operaVpnAuto.startOpera();
+        operaVpnAuto.connect();
+
         pressHome();
 
         FacebookAuto facebookAuto = new FacebookAuto(mDevice);

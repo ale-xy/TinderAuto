@@ -49,7 +49,7 @@ print("Runing scenario step 1...")
 
 
 def runTest(test):
-    print "Running %s..." % test
+    print ("Running %s..." % test)
     result = subprocess.check_output(
         "adb shell am instrument -w -r  -e debug false -e class name.alexy.test.tinderauto.AppsAuto#%s name.alexy.test.tinderauto.test/android.support.test.runner.AndroidJUnitRunner" % test,
         shell=True,
