@@ -2,6 +2,7 @@ package name.alexy.test.tinderauto;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -15,6 +16,8 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -29,7 +32,8 @@ import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT_SHORT;
 import static name.alexy.test.tinderauto.AppsAuto.LAUNCH_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.PASSWORD;
-import static name.alexy.test.tinderauto.AppsAuto.SMS_NEXT_NUMBER_RETRY;
+import static name.alexy.test.tinderauto.AppsAuto.SMS_NEXT_NUMBER_RETRIES;
+import static name.alexy.test.tinderauto.AppsAuto.clickIfExistsByText;
 import static name.alexy.test.tinderauto.AppsAuto.pressMultipleTimes;
 import static org.junit.Assert.fail;
 
@@ -158,9 +162,11 @@ public class FacebookAuto {
 
         //sms
 
+
         if (smsTitle.exists()) {
             Log.d("FacebookAuto", "sms title found");
-            String code = new FacebookSmsParser().getCode(phone, phoneTime - 20000, AppsAuto.SMS_REPEAT, AppsAuto.SMS_DELAY);
+
+            String code = requestSmsCode(phone, phoneTime);
 
             if (TextUtils.isEmpty(code)) {
                 Log.e("FacebookAuto", "No facebook code received");
@@ -184,7 +190,23 @@ public class FacebookAuto {
         return phone;
     }
 
-    private String newNumber(long phoneTime) throws Exception {
+    @Nullable
+    private String requestSmsCode(String phone, long phoneTime) throws IOException, ParseException, UiObjectNotFoundException {
+        int resendSmsRetries = AppsAuto.RESEND_SMS_ATTEMPTS;
+        String code;
+
+        do {
+            code = new FacebookSmsParser().getCode(phone, phoneTime - 20000, AppsAuto.SMS_REPEAT, AppsAuto.SMS_DELAY);
+
+            if (TextUtils.isEmpty(code)) {
+                mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/conf_code_bottom_option_1")).click();
+                clickIfExistsByText(mDevice, "GET SMS");
+            }
+        } while (resendSmsRetries-- > 0);
+        return code;
+    }
+
+     private String newNumber(long phoneTime) throws Exception {
         String phone;
         String code;
 
@@ -198,17 +220,17 @@ public class FacebookAuto {
                 return null;
             }
 
-            Log.w("FacebookAuto", "New phone " + phone);
+            Log.w("FacebookAuto", "New phone " + phone + " retry " + retries);
             PhoneSmsHelper.addUsedPhone(phone);
             enterPhone(phone);
 
-            code = new FacebookSmsParser().getCode(phone, phoneTime - 20000, AppsAuto.SMS_REPEAT, AppsAuto.SMS_DELAY);
+            code = requestSmsCode(phone, phoneTime);
 
             if (TextUtils.isEmpty(code)) {
                 Log.e("FacebookAuto", "No facebook code received");
             }
 
-        } while (TextUtils.isEmpty(code) && retries++ < SMS_NEXT_NUMBER_RETRY);
+        } while (TextUtils.isEmpty(code) && retries++ < SMS_NEXT_NUMBER_RETRIES);
 
         if (TextUtils.isEmpty(code)) {
             fail("No SMS received");

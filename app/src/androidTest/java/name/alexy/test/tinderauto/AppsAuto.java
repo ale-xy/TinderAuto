@@ -32,7 +32,8 @@ public class AppsAuto {
     static final int FIND_TIMEOUT_SHORT = 1000;
     static final int SMS_REPEAT = 30;
     static final int SMS_DELAY = 2000;
-    static final int SMS_NEXT_NUMBER_RETRY = 2;
+    public static final int RESEND_SMS_ATTEMPTS = 2;
+    static final int SMS_NEXT_NUMBER_RETRIES = 2;
 
     static final String COUNTRY = "United Kingdom";
     static final String COUNTRY_CODE = "44";
