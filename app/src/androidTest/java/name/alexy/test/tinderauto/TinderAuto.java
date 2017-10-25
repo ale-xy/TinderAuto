@@ -104,12 +104,11 @@ public class TinderAuto {
     }
 
     public void continueAfterPhoneRegistration() throws Exception {
-        //launchTinder();
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/onboarding_add_photo_done_button")).click();
         fillProfileAndLike(false);
     }
 
-    private void fillProfileAndLike(boolean facebook) throws UiObjectNotFoundException, InterruptedException {
+    private void fillProfileAndLike(boolean facebook) throws Exception {
         //allow location
         mDevice.wait(Until.hasObject(By.text("ALLOW")), FIND_TIMEOUT);
         AppsAuto.pressMultipleTimes(mDevice, "ALLOW");
@@ -231,7 +230,7 @@ public class TinderAuto {
         }
     }
 
-    private void fillProfile(int numPhotos) throws UiObjectNotFoundException {
+    private void fillProfile(int numPhotos) throws UiObjectNotFoundException, IOException {
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_profile")).click();
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_edit_button")).click();
@@ -245,7 +244,7 @@ public class TinderAuto {
 
         scrollView.scrollForward();
 
-        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/editText_bio")).setText("Bio bio bio bio bio");
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/editText_bio")).setText(Utils.getRandomLine("bio.txt"));
         //todo anthem
 
         mDevice.pressBack();
