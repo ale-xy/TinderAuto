@@ -72,7 +72,16 @@ public abstract class SmsParser {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SS"); //2017-10-05T12:06:02.91
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+1"));
-        Date date = dateFormat.parse(message.getDateReceived());
+
+        Date date;
+        try {
+            date = dateFormat.parse(message.getDateReceived());
+        } catch (ParseException e) {
+            dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+            date = dateFormat.parse(message.getDateReceived());
+        }
+
         System.out.println("Sms time " + message.getDateReceived() + " parsed time " + dateFormat.format(date) + " start time " + dateFormat.format(startTime));
         return date.getTime() >= startTime;
     }
