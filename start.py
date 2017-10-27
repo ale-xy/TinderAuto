@@ -70,10 +70,13 @@ def runEmulator(proxy):
                 break
             if out != '':
                 print (out)
+                if (out.find("Proxy will be ignored") >= 0):
+                    return False
         except IOError:
             break
 
     time.sleep(5)
+    return True
 
 def runNextProxy():
     try:
@@ -82,9 +85,12 @@ def runNextProxy():
         print "No emulator running"
 
     lines = open('proxy.txt').read().splitlines()
-    proxy = random.choice(lines)
-    print "Proxy %s" % proxy
-    runEmulator(proxy)
+    while (True):
+        proxy = random.choice(lines)
+        print "Proxy %s" % proxy
+        if (runEmulator(proxy)):
+            break
+        killEmulator()
 
 def killEmulator():
     runCommand("adb emu kill")
