@@ -41,6 +41,10 @@ def runTest(test):
         shell=True,
         stderr=subprocess.STDOUT)
     print result
+
+    if result.find("No phone number"):
+        raise ValueError("No phone number")
+
     if result.find("FAILURES!!!") >= 0:
         raise OSError("Execution failed")
 
@@ -65,6 +69,9 @@ while execution < NUMBER_OF_EXECUTIONS:
 
     try:
         runTest("play")
+    except ValueError as error:
+        print error.message
+        exit(0)
     except Exception as exception:
         print "Error %s" % exception.message
         continue

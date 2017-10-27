@@ -83,14 +83,12 @@ public class AppsAuto {
         tinderAuto = new TinderAuto(mDevice);
         tinderAuto.runTinder(phone, true, true);
         tinderAuto.runTinder(phone, false, false);
-
     }
 
     @Test
     public void continueAfterPhoneReg() throws Exception {
         tinderAuto = new TinderAuto(mDevice);
         tinderAuto.continueAfterPhoneRegistration();
-
     }
 
     static void pressMultipleTimes(UiDevice device, String text) throws UiObjectNotFoundException {

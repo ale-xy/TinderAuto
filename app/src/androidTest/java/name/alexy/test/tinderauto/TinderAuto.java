@@ -32,6 +32,7 @@ import static name.alexy.test.tinderauto.AppsAuto.COUNTRY_CODE;
 import static name.alexy.test.tinderauto.AppsAuto.FILE_BIRTHDAYS;
 import static name.alexy.test.tinderauto.AppsAuto.FILE_NAMES;
 import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT;
+import static name.alexy.test.tinderauto.AppsAuto.FIND_TIMEOUT_SHORT;
 import static name.alexy.test.tinderauto.AppsAuto.LAUNCH_TIMEOUT;
 import static name.alexy.test.tinderauto.AppsAuto.PASSWORD;
 import static name.alexy.test.tinderauto.AppsAuto.clickIfExistsById;
@@ -72,6 +73,7 @@ public class TinderAuto {
 
                 UiObject fbButton = mDevice.findObject(new UiSelector().className(Button.class).packageName("com.facebook.katana").resourceId("u_0_9"));
 
+                Log.d("TinderAuto", "Wait for loading");
                 waitLoading();
                 Log.d("TinderAuto", "Searching for FB button");
 
@@ -81,7 +83,7 @@ public class TinderAuto {
                     Log.d("TinderAuto", "No FB auth");
                 }
 
-                if (error.waitForExists(300)) {
+                if (error.waitForExists(FIND_TIMEOUT_SHORT)) {
                     mDevice.findObject(new UiSelector().resourceId("com.tinder:id/txt_mono_choice")).click();
                 }
 
@@ -110,7 +112,7 @@ public class TinderAuto {
         mDevice.wait(Until.hasObject(By.text("ALLOW")), FIND_TIMEOUT);
         AppsAuto.pressMultipleTimes(mDevice, "ALLOW");
 
-        fillProfile(facebook? 2 : 1);
+        fillProfile(facebook);
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_flame")).click();
 
@@ -239,15 +241,18 @@ public class TinderAuto {
         } while (loading.waitForExists(100));
     }
 
-    private void fillProfile(int numPhotos) throws UiObjectNotFoundException, IOException {
+    private void fillProfile(boolean facebook) throws UiObjectNotFoundException, IOException {
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/tab_profile")).click();
 
         mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_tab_user_info_edit_button")).click();
 
-        for (int i = 0; i < numPhotos; i++) {
-            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_image_action_5")).click();
+        if (facebook) {
+            mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_image_action_1")).click();
             addPhoto();
         }
+
+        mDevice.findObject(new UiSelector().resourceId("com.tinder:id/profile_image_action_6")).click();
+        addPhoto();
 
         UiScrollable scrollView = new UiScrollable(new UiSelector().className("android.widget.ScrollView").resourceId("com.tinder:id/scrollView"));
 
