@@ -182,6 +182,8 @@ public class TinderAuto {
                 dialogShown = clickIfExistsById(mDevice, "com.tinder:id/txt_choice_two");
             }
 
+            clickIfExistsByText(mDevice, "Ok, got it!", FIND_TIMEOUT_SHORT);
+
         }
         clickIfExistsById(mDevice, "com.tinder:id/btn_find_more_matches");
     }
