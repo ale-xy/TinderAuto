@@ -6,6 +6,7 @@ import time
 from os.path import expanduser
 
 NUMBER_OF_EXECUTIONS = 10
+AVD_NAME = "Nexus_5_API_25_google"
 
 def nextCoords():
     lines = open('coordinates.txt').read().splitlines()
@@ -30,6 +31,7 @@ def setRandomLocation():
     telnet.close()
 
 def runCommand(command):
+    print command
     result = os.system(command)
     if (result != 0):
         raise OSError("Execution failed")
@@ -42,13 +44,36 @@ def runTest(test):
         stderr=subprocess.STDOUT)
     print result
 
-    if result.find("No phone number"):
+    if result.find("No phone number") >= 0:
         raise ValueError("No phone number")
 
     if result.find("FAILURES!!!") >= 0:
         raise OSError("Execution failed")
 
 
+def runEmulator(proxy):
+    emulatorCommand = "%s/tools/emulator" % os.environ["ANDROID_HOME"]
+    print "%s -avd %s -http-proxy http://%s" % (emulatorCommand, AVD_NAME, proxy)
+    subprocess.Popen("%s -avd %s -http-proxy %s" % (emulatorCommand, AVD_NAME, proxy), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    runCommand("adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'")
+    time.sleep(5)
+
+def runNextProxy():
+    try:
+        killEmulator()
+    except OSError:
+        print "No emulator running"
+
+    lines = open('proxy.txt').read().splitlines()
+    proxy = random.choice(lines)
+    print "Proxy %s" % proxy
+    runEmulator(proxy)
+
+def killEmulator():
+    runCommand("adb emu kill")
+    time.sleep(5)
+
+runNextProxy()
 print("Installing...")
 runCommand("gradlew installDebug installDebugAndroidTest")
 
@@ -56,6 +81,11 @@ execution = 0
 
 while execution < NUMBER_OF_EXECUTIONS:
     print("========= Run number %d" % execution)
+    print "Run emulator"
+
+    if (execution > 0):
+        runNextProxy()
+
     print("Clear data...")
     runCommand("gradlew app:clearData")
     execution = execution + 1
@@ -83,6 +113,7 @@ while execution < NUMBER_OF_EXECUTIONS:
         runTest("continueAfterPhoneReg")
     except Exception as exception:
         print "Error %s" % exception.message
-        continue
+    finally:
+        killEmulator()
 
 print "Finished"
