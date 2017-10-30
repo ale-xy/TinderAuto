@@ -198,7 +198,8 @@ public class FacebookAuto {
         do {
             code = new FacebookSmsParser().getCode(phone, phoneTime - 20000, AppsAuto.SMS_REPEAT, AppsAuto.SMS_DELAY);
 
-            if (TextUtils.isEmpty(code)) {
+            if (TextUtils.isEmpty(code) && resendSmsRetries > 0) {
+                Log.d("FacebookAuto", "Resend sms, attempts left " + resendSmsRetries);
                 mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/conf_code_bottom_option_1")).click();
                 clickIfExistsByText(mDevice, "GET SMS");
             }
@@ -210,7 +211,7 @@ public class FacebookAuto {
         String phone;
         String code;
 
-        int retries = 0;
+        int retries = 1;
 
         do {
             mDevice.findObject(new UiSelector().resourceId("com.facebook.katana:id/conf_code_bottom_option_2")).click();

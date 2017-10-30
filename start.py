@@ -42,7 +42,7 @@ def runTest(test):
         stderr=subprocess.STDOUT)
     print result
 
-    if result.find("No phone number"):
+    if result.find("No phone number") >= 0:
         raise ValueError("No phone number")
 
     if result.find("FAILURES!!!") >= 0:
