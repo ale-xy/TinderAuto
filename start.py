@@ -1,5 +1,6 @@
 import os
 import random
+import re
 import subprocess
 import telnetlib
 import time
@@ -45,6 +46,14 @@ def runTest(test):
         shell=True,
         stderr=subprocess.STDOUT)
     print result
+
+    regex = re.compile("java.lang.RuntimeException: (.+)")
+    match = regex.search(result)
+    if match:
+        raise ValueError("Number fetch error: %s" % match.groups(0))
+
+    # if result.find("RuntimeException") >= 0:
+    #     raise ValueError("Number fetch error")
 
     if result.find("No phone number") >= 0:
         raise ValueError("No phone number")
@@ -102,7 +111,8 @@ runCommand("gradlew installDebug installDebugAndroidTest")
 
 execution = 0
 
-while execution < NUMBER_OF_EXECUTIONS:
+while True:
+    #execution < NUMBER_OF_EXECUTIONS:
     print("========= Run number %d" % execution)
     print "Run emulator"
 

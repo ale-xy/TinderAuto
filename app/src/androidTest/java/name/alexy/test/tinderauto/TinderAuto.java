@@ -45,7 +45,7 @@ import static name.alexy.test.tinderauto.AppsAuto.clickIfExistsByText;
 public class TinderAuto {
     static final String TINDER_PACKAGE = "com.tinder";
     public static final int DISTANCE_IN_MILES = 30;
-    private static final int LIKES_AMOUNT = 10;
+    private static final int LIKES_AMOUNT = 100;
     private static final int AUTH_RETRY_COUNT = 10;
     public static final String GOOGLE_MAPS_PACKAGE = "com.google.android.apps.maps";
 
