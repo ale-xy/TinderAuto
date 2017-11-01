@@ -55,8 +55,6 @@ public class AppsAuto {
     private void pressHome() {
         mDevice.pressHome();
 
-        //todo storage permissions
-
         // Wait for launcher
         final String launcherPackage = mDevice.getLauncherPackageName();
         assertThat(launcherPackage, notNullValue());
@@ -73,7 +71,9 @@ public class AppsAuto {
 
         FacebookAuto facebookAuto = new FacebookAuto(mDevice);
 
-        String phone = facebookAuto.createFacebookAccount();
+        String phone = null;
+
+        phone = facebookAuto.createFacebookAccount();
 
         if (TextUtils.isEmpty(phone)) {
             fail("No phone number");

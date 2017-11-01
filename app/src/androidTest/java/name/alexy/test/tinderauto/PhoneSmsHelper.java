@@ -26,10 +26,12 @@ public class PhoneSmsHelper {
     private static final String USED_PHONES_SET = "USED_PHONES_SET";
 
     public static String getFacebookFreePhoneNumber() throws IOException, ParseException {
-//        return "447417250209"; 447417258425
-
 
         PhoneData phoneData = PhoneServiceApi.service.getPhoneData().execute().body();
+
+        if (TextUtils.equals("Failure", phoneData.getStatus())) {
+            throw new RuntimeException(phoneData.getErrorCode());
+        }
 
         Set<String> usedPhones = getUsedPhones();
 
