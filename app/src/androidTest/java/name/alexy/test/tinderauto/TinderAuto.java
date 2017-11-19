@@ -120,7 +120,7 @@ public class TinderAuto {
 
         int retries = 0;
         while (wrong.waitForExists(FIND_TIMEOUT)) {
-            if (retries > AUTH_RETRY_COUNT) {
+            if (retries >= AUTH_RETRY_COUNT) {
                 fail("Something went wrong with Tinder");
             }
 
@@ -239,8 +239,8 @@ public class TinderAuto {
         UiObject loading = mDevice.findObject(new UiSelector().textStartsWith("Loading"));
 
         do {
-            Thread.sleep(200);
-        } while (loading.waitForExists(100));
+            Thread.sleep(500);
+        } while (loading.waitForExists(500));
     }
 
     private void fillProfile(boolean facebook) throws UiObjectNotFoundException, IOException {
