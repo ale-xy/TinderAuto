@@ -71,14 +71,14 @@ public abstract class SmsParser {
         System.out.println("Parsing sms " + message.getMessage());
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SS"); //2017-10-05T12:06:02.91
-        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+        dateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
 
         Date date;
         try {
             date = dateFormat.parse(message.getDateReceived());
         } catch (ParseException e) {
             dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+1"));
+            dateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
             date = dateFormat.parse(message.getDateReceived());
         }
 
