@@ -170,6 +170,11 @@ public class TinderAuto {
     private void like() throws UiObjectNotFoundException {
         boolean dialogShown = false;
         for (int i = 0; i < LIKES_AMOUNT; i++) {
+            UiObject nobody = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/recs_status_message").textContains("no one new"));
+            if (nobody.exists()) {
+                break;
+            }
+
             UiObject like = mDevice.findObject(new UiSelector().resourceId("com.tinder:id/gamepad_like"));
             if (!like.exists()) {
                 clickIfExistsById(mDevice, "com.tinder:id/btn_find_more_matches");
