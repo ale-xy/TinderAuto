@@ -244,7 +244,7 @@ public class TinderAuto {
         UiObject loading = mDevice.findObject(new UiSelector().textStartsWith("Loading"));
 
         do {
-            Thread.sleep(500);
+            Thread.sleep(2000);
         } while (loading.waitForExists(500));
     }
 
