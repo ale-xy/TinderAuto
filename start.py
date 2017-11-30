@@ -68,7 +68,7 @@ def runEmulator(proxy):
     # flags = fcntl(process.stdout, F_GETFL)  # get current p.stdout flags
     # fcntl(process.stdout, F_SETFL, flags | O_NONBLOCK)
 
-    runCommand("adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'")
+    runCommand("adb wait-for-device shell \"while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;\"")
 
     # while True:
     #     try:
