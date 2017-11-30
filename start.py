@@ -6,6 +6,13 @@ import telnetlib
 import time
 from os.path import expanduser
 
+if os.name == 'posix':
+    from fcntl import fcntl, F_GETFL, F_SETFL
+    from os import O_NONBLOCK
+    gradleCmd = './gradlew'
+else:
+    gradleCmd = 'gradlew'
+
 NUMBER_OF_EXECUTIONS = 10
 AVD_NAME = "Nexus_5_API_25_google"
 
@@ -65,22 +72,23 @@ def runEmulator(proxy):
     print "%s -avd %s -http-proxy http://%s" % (emulatorCommand, AVD_NAME, proxy)
     process = subprocess.Popen("%s -avd %s -http-proxy %s" % (emulatorCommand, AVD_NAME, proxy), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    # flags = fcntl(process.stdout, F_GETFL)  # get current p.stdout flags
-    # fcntl(process.stdout, F_SETFL, flags | O_NONBLOCK)
-
-    runCommand("adb wait-for-device shell \"while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;\"")
-
-    # while True:
-    #     try:
-    #         out = process.stdout.readline()
-    #         if out == '' and process.poll() != None:
-    #             break
-    #         if out != '':
-    #             print (out)
-    #             if (out.find("Proxy will be ignored") >= 0):
-    #                 return False
-    #     except IOError:
-    #         break
+    if os.name == 'posix':
+        flags = fcntl(process.stdout, F_GETFL)  # get current p.stdout flags
+        fcntl(process.stdout, F_SETFL, flags | O_NONBLOCK)
+        runCommand("adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'")
+        while True:
+            try:
+                out = process.stdout.readline()
+                if out == '' and process.poll() != None:
+                    break
+                if out != '':
+                    print (out)
+                    if (out.find("Proxy will be ignored") >= 0):
+                        return False
+            except IOError:
+                break
+    else:
+        runCommand("adb wait-for-device shell \"while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;\"")
 
     time.sleep(5)
     return True
@@ -105,7 +113,7 @@ def killEmulator():
 
 runNextProxy()
 print("Installing...")
-runCommand("gradlew installDebug installDebugAndroidTest")
+runCommand("%s installDebug installDebugAndroidTest" % gradleCmd)
 
 execution = 0
 
@@ -118,7 +126,7 @@ while True:
         runNextProxy()
 
     print("Clear data...")
-    runCommand("gradlew app:clearData")
+    runCommand("%s app:clearData" % gradleCmd)
     execution = execution + 1
 
     print("Set location...")
