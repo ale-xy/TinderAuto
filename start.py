@@ -4,8 +4,6 @@ import re
 import subprocess
 import telnetlib
 import time
-from fcntl import fcntl, F_GETFL, F_SETFL
-from os import O_NONBLOCK
 from os.path import expanduser
 
 NUMBER_OF_EXECUTIONS = 10
@@ -67,22 +65,22 @@ def runEmulator(proxy):
     print "%s -avd %s -http-proxy http://%s" % (emulatorCommand, AVD_NAME, proxy)
     process = subprocess.Popen("%s -avd %s -http-proxy %s" % (emulatorCommand, AVD_NAME, proxy), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    flags = fcntl(process.stdout, F_GETFL)  # get current p.stdout flags
-    fcntl(process.stdout, F_SETFL, flags | O_NONBLOCK)
+    # flags = fcntl(process.stdout, F_GETFL)  # get current p.stdout flags
+    # fcntl(process.stdout, F_SETFL, flags | O_NONBLOCK)
 
     runCommand("adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done;'")
 
-    while True:
-        try:
-            out = process.stdout.readline()
-            if out == '' and process.poll() != None:
-                break
-            if out != '':
-                print (out)
-                if (out.find("Proxy will be ignored") >= 0):
-                    return False
-        except IOError:
-            break
+    # while True:
+    #     try:
+    #         out = process.stdout.readline()
+    #         if out == '' and process.poll() != None:
+    #             break
+    #         if out != '':
+    #             print (out)
+    #             if (out.find("Proxy will be ignored") >= 0):
+    #                 return False
+    #     except IOError:
+    #         break
 
     time.sleep(5)
     return True
