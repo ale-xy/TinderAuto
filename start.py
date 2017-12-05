@@ -100,8 +100,24 @@ def runNextProxy():
         print "No emulator running"
 
     lines = open('proxy.txt').read().splitlines()
-    while (True):
-        proxy = random.choice(lines)
+
+    while True:
+        try:
+            used = set(open('usedproxies.txt').read().splitlines())
+        except IOError:
+            used = set()
+
+        if used >= set(lines):
+            raise Exception("All proxies used")
+
+        while True:
+            proxy = random.choice(lines)
+            if not proxy in used:
+                break
+
+        with open("usedproxies.txt", "a") as usedFile:
+            usedFile.write(proxy + '\n')
+
         print "Proxy %s" % proxy
         if (runEmulator(proxy)):
             break
