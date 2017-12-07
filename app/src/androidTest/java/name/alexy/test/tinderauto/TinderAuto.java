@@ -69,6 +69,7 @@ public class TinderAuto {
             int retries = 0;
 
             do {
+                Log.d("TinderAuto", "FB login button");
                 mDevice.findObject(new UiSelector().className(Button.class).resourceId("com.tinder:id/real_facebook_login_button")).click();
 
                 UiObject fbButton = mDevice.findObject(new UiSelector().className(Button.class).packageName("com.facebook.katana").resourceId("u_0_9"));
@@ -81,6 +82,7 @@ public class TinderAuto {
                     fbButton.click();
                 } else {
                     Log.d("TinderAuto", "No FB auth");
+                    fail("Can't login to Tinder with Facebook");
                 }
 
                 if (error.waitForExists(FIND_TIMEOUT_SHORT)) {
@@ -242,10 +244,13 @@ public class TinderAuto {
 
     private void waitLoading() throws InterruptedException {
         UiObject loading = mDevice.findObject(new UiSelector().textStartsWith("Loading"));
+        int retries = 0;
 
         do {
             Thread.sleep(2000);
-        } while (loading.waitForExists(500));
+            loading.waitForExists(5000);
+            Log.d("TinderAuto", "Loading "+retries);
+        } while (loading.waitForExists(500) && retries++ < 20);
     }
 
     private void fillProfile(boolean facebook) throws UiObjectNotFoundException, IOException {
